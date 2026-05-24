@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de amor</title>
+    <title>¡ÓVALO AMOROSO 3D! (Dificultad Balanceada 45%)</title>
     <style>
-        /* Estilo general tipo sitio de juegos Flash del 2008 */
         body { 
             margin: 0; 
             overflow: hidden; 
@@ -93,7 +92,6 @@
             100% { opacity: 0; }
         }
     </style>
-    <!-- Motor 3D Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -102,7 +100,7 @@
         <span style="color:#ff00ff; font-size:16px;">MISION: CONSEGUIR NOVIA</span><br>
         • CONTROLES: WASD / FLECHITAS<br>
         • SALTO: ESPACIO<br>
-        • DIFICULTAD: 99.9% (IMPOSIBLE)
+        • CHANCE DE ÉXITO: 45% (¡ES POSIBLE!)
     </div>
 
     <div id="loading-tag">¡¡CONECTANDO CON ÓVALA NPC!!</div>
@@ -113,11 +111,9 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN DE ESCENA (Estilo Estética Aero/Flash) ---
+        // --- CONFIGURACIÓN DE ESCENA ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0088cc); // Azul cielo brillante de los 2000s
-
-        // Niebla nostálgica de juego viejo
+        scene.background = new THREE.Color(0x0088cc); 
         scene.fog = new THREE.FogExp2(0x0088cc, 0.03);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -125,51 +121,62 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Iluminación brillante tipo render viejo
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.position.set(5, 15, 10);
         scene.add(dirLight);
 
-        // El Suelo: Rejilla retro brillante
+        // El Suelo y Rejilla Retro
         const floorGeo = new THREE.PlaneGeometry(100, 100);
-        const floorMat = new THREE.MeshStandardMaterial({ 
-            color: 0x112244, 
-            roughness: 0.2,
-            metalness: 0.5
-        });
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x112244, roughness: 0.2, metalness: 0.5 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        // Grid (Líneas verdes encima del suelo, muy de juego indie viejo)
         const gridHelper = new THREE.GridHelper(100, 50, 0x00ff00, 0x00aa00);
         gridHelper.position.y = 0.01;
         scene.add(gridHelper);
 
-        // --- CREACIÓN DE PERSONAJES (ÓVALOS PLÁSTICOS) ---
+        // --- ÓVALOS ---
         const ovalGeo = new THREE.SphereGeometry(1, 32, 32);
         
-        // Jugador (Óvalo Azul brillante)
         const playerMat = new THREE.MeshPhongMaterial({ color: 0x00ffff, shininess: 100 });
         const player = new THREE.Mesh(ovalGeo, playerMat);
         player.scale.set(0.7, 1.4, 0.7);
         player.position.set(0, 1.4, 0);
         scene.add(player);
 
-        // La Óvala (Interés amoroso color rosa chicle)
         const npcMat = new THREE.MeshPhongMaterial({ color: 0xff00ff, shininess: 100 });
         const npc = new THREE.Mesh(ovalGeo, npcMat);
         npc.scale.set(0.7, 1.4, 0.7);
         npc.position.set(0, 1.4, -10);
         scene.add(npc);
 
+        // Partículas para la celebración del final bueno
+        let fireworks = [];
+        function crearFuegosArtificiales() {
+            const partGeo = new THREE.SphereGeometry(0.1, 8, 8);
+            for(let i=0; i<50; i++) {
+                const partMat = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+                const p = new THREE.Mesh(partGeo, partMat);
+                p.position.copy(npc.position);
+                p.position.y += 2;
+                p.userData = {
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.3) * 0.3,
+                    vz: (Math.random() - 0.5) * 0.3
+                };
+                scene.add(p);
+                fireworks.push(p);
+            }
+        }
+
         // --- CONTROLES Y FÍSICAS ---
         const keys = { w:0, a:0, s:0, d:0, ArrowUp:0, ArrowDown:0, ArrowLeft:0, ArrowRight:0, Space: 0 };
         let vy = 0;
         let isJumping = false;
-        const gravity = -0.012; // Un pelín más pesado tipo arcade
+        const gravity = -0.012; 
         const speed = 0.16;
 
         window.addEventListener('keydown', (e) => {
@@ -181,54 +188,67 @@
             if(e.key in keys) keys[e.key] = false;
         });
 
-        // --- DIÁLOGOS SIN PIEDAD (99% DIFICULTAD) ---
+        // --- SISTEMA DE DIÁLOGOS CON AZAR (45% CHANCE) ---
         const ui = document.getElementById('ui-container');
         const loader = document.getElementById('loading-tag');
         const dialogoTxt = document.getElementById('dialogo');
         const opcionesContainer = document.getElementById('opciones-container');
         let hablando = false;
+        let juegoGanado = false;
 
         const historia = {
             inicio: {
-                texto: "ÓVALA: '¿Qué quieres, óvalo azul? Estoy esperando a que actualicen el servidor...'",
+                texto: "ÓVALA: 'Hola... Te vi saltando por ahí. ¿Qué quieres?'",
                 opciones: [
-                    { texto: "Me pareciste linda... ¿Quieres ser mi novia?", siguiente: "rechazo1" },
-                    { texto: "Mira qué alto salto con la barra espaciadora", siguiente: "rechazo2" }
+                    { texto: "Me pareciste muy linda... ¿Quieres ser mi novia?", siguiente: "calcularAmor" },
+                    { texto: "Ehh... nada, me equivoqué de plano cartesiano.", siguiente: "huida" }
                 ]
             },
-            rechazo1: {
-                texto: "ÓVALA: 'Jajaja no. Tu resolución de polígonos es bajísima y aparte no tienes skins compradas.'",
-                opciones: [{ texto: "Insistir enviándole un zumbido", siguiente: "friendzone" }]
+            huida: {
+                texto: "ÓVALA: 'Ah, bueno. Qué raro eres.'",
+                opciones: [{ texto: "Volver a intentar", siguiente: "reiniciar" }]
             },
-            rechazo2: {
-                texto: "ÓVALA: 'Qué maduro... Mi ex saltaba más alto y era un modelo 3D importado de Blender.'",
-                opciones: [{ texto: "Pedirle perdón por existir", siguiente: "final" }]
+            rechazo: {
+                texto: "ÓVALA: 'Lo siento, eres un buen óvalo pero mi corazón le pertenece a un cilindro súper guapo. Seamos amigos.' (55% de probabilidad de rechazo)",
+                opciones: [{ texto: "F en el chat (Reintentar)", siguiente: "reiniciar" }]
             },
-            friendzone: {
-                texto: "ÓVALA: 'Te voy a bloquear del MSN Messenger. Quédate como amigo de las paredes.'",
-                opciones: [{ texto: "*Desconectarse de internet*", siguiente: "final" }]
-            },
-            final: {
-                texto: "¡GAME OVER! Has fallado la misión. Tu destino es ser un solterón geométrico.",
-                opciones: [{ texto: "INSERTAR COIN (Reintentar)", siguiente: "reiniciar" }]
+            victoria: {
+                texto: "ÓVALA: '¡SÍ! Me encantan los óvalos atrevidos. ¡Salgamos de este juego flash juntos!' (¡45% DE ÉXITO LOGRADO!)",
+                opciones: [{ texto: "¡VAMOSSS! (Jugar de nuevo)", siguiente: "reiniciar" }]
             }
         };
 
         function iniciarConversacion() {
             hablando = true;
-            loader.style.display = 'block'; // Efecto lag de carga viejo
+            loader.style.display = 'block'; 
 
             setTimeout(() => {
                 loader.style.display = 'none';
                 ui.style.display = 'block';
                 cargarNodo("inicio");
-            }, 1200); // 1.2 segundos de pantalla de carga falsa
+            }, 1000); 
         }
 
         function cargarNodo(nodoId) {
+            // Lógica de probabilidad del 45%
+            if(nodoId === "calcularAmor") {
+                const suerte = Math.random() * 100; // Saca un número del 0 al 100
+                if(suerte <= 45) {
+                    nodoId = "victoria";
+                    juegoGanado = true;
+                    crearFuegosArtificiales();
+                } else {
+                    nodoId = "rechazo";
+                }
+            }
+
             if(nodoId === "reiniciar") {
                 ui.style.display = 'none';
                 hablando = false;
+                juegoGanado = false;
+                // Limpiar fuegos artificiales viejos
+                fireworks.forEach(p => scene.remove(p));
+                fireworks = [];
                 player.position.set(0, 1.4, 0);
                 return;
             }
@@ -246,23 +266,30 @@
             });
         }
 
-        // --- BUCLE DE RENDERIZADO CORREGIDO ---
+        // --- BUCLE DE ANIMACIÓN ---
         camera.position.set(0, 5, 10);
 
         function animate() {
             requestAnimationFrame(animate);
 
-            // Rotación leve de los personajes para que se vean dinámicos como en los juegos Flash
             npc.rotation.y += 0.01;
 
+            // Animación de fuegos artificiales si ganas
+            if (juegoGanado) {
+                fireworks.forEach(p => {
+                    p.position.x += p.userData.vx;
+                    p.position.y += p.userData.vy;
+                    p.position.z += p.userData.vz;
+                    p.userData.vy -= 0.005; // gravedad de la partícula
+                });
+            }
+
             if (!hablando) {
-                // Controles de movimiento
                 if (keys.w || keys.ArrowUp) player.position.z -= speed;
                 if (keys.s || keys.ArrowDown) player.position.z += speed;
                 if (keys.a || keys.ArrowLeft) player.position.x -= speed;
                 if (keys.d || keys.ArrowRight) player.position.x += speed;
 
-                // Sistema de salto
                 if (keys.Space && !isJumping) {
                     vy = 0.23;
                     isJumping = true;
@@ -278,20 +305,17 @@
                     }
                 }
 
-                // Cámara elástica estilo retro
                 camera.position.x = player.position.x;
                 camera.position.z = player.position.z + 7;
                 camera.position.y = player.position.y + 3.5;
                 camera.lookAt(player.position);
 
-                // Check de colisión con la óvala rosa
                 const distancia = player.position.distanceTo(npc.position);
                 if (distancia < 2.0) {
                     iniciarConversacion();
                 }
             }
 
-            // Un solo render limpio para que no falle nada
             renderer.render(scene, camera);
         }
 
